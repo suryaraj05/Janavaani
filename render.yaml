@@ -23,6 +23,10 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      - key: TRIAGE_MODEL
+        value: gemini-3.1-flash-lite
+      - key: TRIAGE_MODEL_FALLBACK
+        value: gemini-2.5-flash
 
   - type: web
     name: janavaani-intake
@@ -51,5 +55,9 @@ services:
         value: Malkajgiri
       - key: GEMINI_API_KEY
         sync: false
+      - key: TRIAGE_MODEL
+        value: gemini-3.1-flash-lite
+      - key: TRIAGE_MODEL_FALLBACK
+        value: gemini-2.5-flash
       - key: ENRICH_WORKER_URL
         value: https://janavaani-enrich.onrender.com

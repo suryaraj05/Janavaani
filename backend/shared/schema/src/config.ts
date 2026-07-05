@@ -1,5 +1,7 @@
-export const TRIAGE_MODEL = process.env.TRIAGE_MODEL ?? 'gemini-2.5-flash';
-export const TRIAGE_MODEL_FALLBACK = process.env.TRIAGE_MODEL_FALLBACK ?? 'gemini-2.0-flash';
+// Primary: gemini-3.1-flash-lite (GA) — 500 req/day free tier, supports image + JSON schema.
+// Fallback: gemini-2.5-flash — 20 req/day. Both share the same GEMINI_API_KEY project quota.
+export const TRIAGE_MODEL = process.env.TRIAGE_MODEL ?? 'gemini-3.1-flash-lite';
+export const TRIAGE_MODEL_FALLBACK = process.env.TRIAGE_MODEL_FALLBACK ?? 'gemini-2.5-flash';
 export const JUSTIFICATION_MODEL = process.env.JUSTIFICATION_MODEL ?? TRIAGE_MODEL;
 export const EMBEDDING_MODEL = 'gemini-embedding-001';
 export const EMBEDDING_DIM = 768;
