@@ -75,7 +75,11 @@ function deterministicJustification(input: JustificationInput): JustificationOut
         .join('; ')
     : 'No public-dataset evidence is loaded for this category yet; the rank reflects citizen demand, source quality and recency only.';
 
-  const text = `${input.demand_stats.unique_citizens} citizens have raised "${input.cluster_title}" across ${channels} in ${input.admin_unit_names.join(', ')}. ${evidenceSentence}`;
+  const planSentence = input.linked_plan
+    ? ` An existing development plan is already on file (${input.linked_plan.source}): "${input.linked_plan.title}" — status: ${input.linked_plan.status.replace('_', ' ')}.`
+    : '';
+
+  const text = `${input.demand_stats.unique_citizens} citizens have raised "${input.cluster_title}" across ${channels} in ${input.admin_unit_names.join(', ')}. ${evidenceSentence}${planSentence}`;
 
   return { text_en: text, evidence_bullets: bullets, caveats: [...new Set(caveats)] };
 }

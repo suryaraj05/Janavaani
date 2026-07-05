@@ -7,4 +7,6 @@ export * from './justification.js';
 export * from './evidence.js';
 export * from './repoRoot.js';
 export * from './loadEnv.js';
+export * from './adjacency.js';
+export * from './developmentPlan.js';
 export * from './firebaseCredentials.js';

@@ -1,0 +1,20 @@
+[
+  {
+    "mandal_code": "TS-0417",
+    "name": "Ghatkesar",
+    "centroid": { "lat": 17.443, "lng": 78.683 },
+    "radius_m": 4200
+  },
+  {
+    "mandal_code": "TS-0418",
+    "name": "Kushaiguda",
+    "centroid": { "lat": 17.49, "lng": 78.56 },
+    "radius_m": 3800
+  },
+  {
+    "mandal_code": "TS-0419",
+    "name": "Uppal",
+    "centroid": { "lat": 17.405, "lng": 78.56 },
+    "radius_m": 3600
+  }
+]

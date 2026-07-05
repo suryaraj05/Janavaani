@@ -5,6 +5,11 @@ import { hashCitizen, getPepper } from '../crypto.js';
 import { requireAuth } from '../middleware/auth.js';
 import { ingestDraft } from '../services/ingest.js';
 import { canReadSubmission, isStaffRole } from '../lib/submissionAccess.js';
+import {
+  filterRealSubmissions,
+  fetchRecentFeedSubmissions,
+  isDemoSubmission,
+} from '../lib/submissionFilters.js';
 
 const router = Router();
 
@@ -81,14 +86,32 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+router.get('/feed', requireAuth, async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 30, 50);
+    const submissions = await fetchRecentFeedSubmissions(getDb(), limit);
+    res.json({ submissions });
+  } catch (err) {
+    console.error('GET /submissions/feed error:', err);
+    res.status(500).json({ error: 'Failed to fetch feed' });
+  }
+});
+
 router.get('/', requireAuth, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const scope = String(req.query.scope ?? 'mine');
     const user = req.user!;
     const pepper = getPepper();
     const userCitizenHash = hashCitizen(user.uid, pepper);
 
     let snapshot;
+    if (scope === 'feed' || (isStaffRole(user.role) && scope === 'all')) {
+      const submissions = await fetchRecentFeedSubmissions(getDb(), limit);
+      res.json({ submissions });
+      return;
+    }
+
     if (!isStaffRole(user.role)) {
       try {
         snapshot = await getDb()
@@ -111,7 +134,8 @@ router.get('/', requireAuth, async (req, res) => {
         .limit(limit)
         .get();
     }
-    const submissions = snapshot.docs.map((doc) => doc.data());
+    const raw = snapshot.docs.map((doc) => doc.data() as Record<string, unknown>);
+    const submissions = filterRealSubmissions(raw);
     res.json({ submissions });
   } catch (err) {
     console.error('GET /submissions error:', err);
@@ -128,6 +152,10 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 
   const data = doc.data()!;
+  if (isDemoSubmission(data as Record<string, unknown>)) {
+    res.status(404).json({ error: 'Submission not found' });
+    return;
+  }
   const user = req.user!;
   const userCitizenHash = hashCitizen(user.uid, getPepper());
   const submissionHash = (data.citizen as { citizen_hash?: string })?.citizen_hash;

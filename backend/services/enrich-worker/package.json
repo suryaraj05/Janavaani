@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./embedding": "./src/embedding.ts",
+    "./clustering": "./src/clustering.ts"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",

@@ -42,6 +42,15 @@ export const JustificationInputSchema = z.object({
   }),
   anomaly_flags: z.array(z.string()),
   evidence_rows: z.array(EvidenceRowSchema),
+  linked_plan: z
+    .object({
+      plan_id: z.string(),
+      title: z.string(),
+      status: z.string(),
+      source: z.string(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const JustificationOutputSchema = z.object({

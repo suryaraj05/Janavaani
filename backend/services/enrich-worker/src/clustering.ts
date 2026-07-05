@@ -1,11 +1,50 @@
 import type { Firestore } from 'firebase-admin/firestore';
-import { percentileIndex, computeInterimScore } from '@pp/schema';
+import { percentileIndex, computeInterimScore, allowedMandalCodes } from '@pp/schema';
 import { cosineSimilarity, l2normalize } from './embedding.js';
 
 /** Threshold bands (§4.2). */
 export const AUTO_MERGE_THRESHOLD = 0.8;
 export const PROVISIONAL_THRESHOLD = 0.65;
 const CENTROID_FREEZE_N = 50;
+
+export interface ClusterCandidate {
+  cluster_id: string;
+  mandal_code: string | null;
+  embedding: number[];
+}
+
+export interface ClusterMatch {
+  cluster_id: string;
+  similarity: number;
+  decided_by: 'auto' | 'staff_review';
+}
+
+/**
+ * Pure vector-search step over pre-filtered candidates (testable without Firestore).
+ * Returns null when no candidate clears the provisional band.
+ */
+export function pickClusterMatch(
+  embedding: number[],
+  candidates: ClusterCandidate[],
+): ClusterMatch | null {
+  let best: { cluster_id: string; similarity: number } | null = null;
+
+  for (const c of candidates) {
+    const similarity = cosineSimilarity(embedding, c.embedding);
+    if (!best || similarity > best.similarity) {
+      best = { cluster_id: c.cluster_id, similarity };
+    }
+  }
+
+  if (!best) return null;
+  if (best.similarity >= AUTO_MERGE_THRESHOLD) {
+    return { ...best, decided_by: 'auto' };
+  }
+  if (best.similarity >= PROVISIONAL_THRESHOLD) {
+    return { ...best, decided_by: 'staff_review' };
+  }
+  return null;
+}
 
 function tokenize(text: string): Set<string> {
   return new Set(
@@ -28,18 +67,9 @@ export function textSimilarity(a: string, b: string): number {
   return intersection / Math.sqrt(ta.size * tb.size);
 }
 
-export interface ClusterMatch {
-  cluster_id: string;
-  similarity: number;
-  decided_by: 'auto' | 'staff_review';
-}
-
 /**
  * Incremental cluster assignment (§4.2). Hard pre-filter (category + mandal /
- * adjacent-mandal when geocode is weak) before cosine similarity against
- * centroid embeddings. Returns the band decision, or null to create a new
- * cluster. In production the vector step is BigQuery VECTOR_SEARCH; here it is
- * cosine over Firestore-stored centroid embeddings.
+ * adjacent-mandal) before cosine similarity against centroid embeddings.
  */
 export async function findMatchingCluster(
   db: Firestore,
@@ -50,34 +80,23 @@ export async function findMatchingCluster(
     geocodeConfidence: 'high' | 'medium' | 'low' | 'none';
   },
 ): Promise<ClusterMatch | null> {
-  let query = db.collection('clusters').where('category', '==', category);
-  // Equal-mandal only when geocode is high; else allow adjacent (approximated
-  // here as all mandals — adjacency table is BigQuery-side in production).
-  if (opts.mandalCode && opts.geocodeConfidence === 'high') {
-    query = query.where('admin_scope.mandal_code', '==', opts.mandalCode);
-  }
+  const allowed = allowedMandalCodes(opts.mandalCode, opts.geocodeConfidence);
 
-  const snapshot = await query.limit(50).get();
-  let best: { cluster_id: string; similarity: number } | null = null;
+  const snapshot = await db.collection('clusters').where('category', '==', category).limit(80).get();
+  const candidates: ClusterCandidate[] = [];
 
   for (const doc of snapshot.docs) {
+    const data = doc.data();
+    const clusterMandal = (data.admin_scope as { mandal_code?: string | null })?.mandal_code ?? null;
+    if (allowed && clusterMandal && !allowed.has(clusterMandal)) continue;
+
     const centroidDoc = await db.collection('cluster_centroids').doc(doc.id).get();
     const centroid = centroidDoc.data()?.embedding as number[] | undefined;
     if (!centroid) continue;
-    const similarity = cosineSimilarity(embedding, centroid);
-    if (!best || similarity > best.similarity) {
-      best = { cluster_id: doc.id, similarity };
-    }
+    candidates.push({ cluster_id: doc.id, mandal_code: clusterMandal, embedding: centroid });
   }
 
-  if (!best) return null;
-  if (best.similarity >= AUTO_MERGE_THRESHOLD) {
-    return { ...best, decided_by: 'auto' };
-  }
-  if (best.similarity >= PROVISIONAL_THRESHOLD) {
-    return { ...best, decided_by: 'staff_review' };
-  }
-  return null;
+  return pickClusterMatch(embedding, candidates);
 }
 
 /** Store/refresh a cluster's centroid embedding (running mean, frozen at n>50). */
@@ -154,15 +173,11 @@ export async function createCluster(
       computed_at: params.now,
     },
     anomaly_flags: [],
+    has_existing_plan: false,
+    linked_plan: null,
     lifecycle: {
       status: 'acknowledged',
-      history: [
-        {
-          action: 'created',
-          by: 'system',
-          at: params.now,
-        },
-      ],
+      history: [{ action: 'created', by: 'system', at: params.now }],
     },
     review_queue: [],
   };

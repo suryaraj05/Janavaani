@@ -131,6 +131,8 @@ async function main() {
         computed_at: now,
       },
       anomaly_flags: [],
+      has_existing_plan: false,
+      linked_plan: null,
       lifecycle: { status: 'acknowledged', history: [{ action: 'seeded', by: 'system', at: now }] },
       review_queue: [],
     });
@@ -146,7 +148,14 @@ async function main() {
     console.log(`Seeded cluster ${clusterId} (${subs.length} submissions, ${citizens.size} citizens)`);
   }
 
-  console.log('Done. Next: start score-runner and POST /run to compute scores.');
+  const plansPath = join(findRepoRoot(), 'fixtures/development_plans_seed.json');
+  const plans = JSON.parse(readFileSync(plansPath, 'utf-8')) as Record<string, unknown>[];
+  for (const plan of plans) {
+    await db.collection('development_plans').doc(plan.plan_id as string).set(plan);
+  }
+  console.log(`Seeded ${plans.length} development plans.`);
+
+  console.log('Done. Next: start score-runner and POST /run to compute scores + plan links.');
 }
 
 main().catch((err) => {

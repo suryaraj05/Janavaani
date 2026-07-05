@@ -65,6 +65,17 @@ async function main(): Promise<void> {
   }
   if (schoolScore <= 0) failures.push('school cluster score should be > 0');
 
+  const schoolPlanLink = school?.linked_plan as { plan_id?: string; status?: string } | undefined;
+  if (school && !schoolPlanLink?.plan_id) {
+    failures.push('flagship school cluster should link to development plan after score pass');
+  }
+
+  const plansSnap = await db.collection('development_plans').get();
+  const linkedRoad = plansSnap.docs.find((d) => d.id === 'plan_roads_uppal_resurfacing');
+  if (linkedRoad && linkedRoad.data().linked_cluster_id) {
+    failures.push('road plan should remain unlinked to school cluster');
+  }
+
   const withJustification = clusters.filter((c) => c.justification?.text_en).length;
   if (withJustification < 5) {
     failures.push(`expected justifications on most clusters, got ${withJustification}`);

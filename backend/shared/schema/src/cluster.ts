@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CategorySchema, LifecycleStatusSchema } from './taxonomy.js';
 import { GeoPointSchema } from './submission.js';
+import { LinkedPlanSummarySchema } from './developmentPlan.js';
 
 export const ClusterStatsSchema = z.object({
   submission_count: z.number().int().nonnegative(),
@@ -55,6 +56,8 @@ export const ClusterSchema = z.object({
   stats: ClusterStatsSchema,
   score: ClusterScoreSchema,
   anomaly_flags: z.array(z.string()).default([]),
+  has_existing_plan: z.boolean().default(false),
+  linked_plan: LinkedPlanSummarySchema.nullable().optional(),
   justification: JustificationSchema.nullable().optional(),
   lifecycle: ClusterLifecycleSchema,
   review_queue: z.array(z.string()).default([]),

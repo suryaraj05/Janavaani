@@ -7,6 +7,8 @@ import ingestRouter from './routes/ingest.js';
 import identityRouter from './routes/identity.js';
 import whatsappRouter from './routes/whatsapp.js';
 import aiRouter from './routes/ai.js';
+import hotspotsRouter from './routes/hotspots.js';
+import developmentPlansRouter from './routes/developmentPlans.js';
 import { getConstituencyCode, getConstituencyName } from './config.js';
 import { JANAVAANI_DEPARTMENTS } from './services/analyze.js';
 
@@ -64,6 +66,8 @@ export function createApp(): express.Application {
   app.use('/api/v1/ai', aiRouter);
   app.use('/api/v1/submissions', submissionsRouter);
   app.use('/api/v1/clusters', clustersRouter);
+  app.use('/api/v1/hotspots', hotspotsRouter);
+  app.use('/api/v1/development-plans', developmentPlansRouter);
   app.use('/api/v1/ingest', ingestRouter);
   app.use('/api/v1/link', identityRouter);
   app.use('/api/v1/webhooks/whatsapp', whatsappRouter);

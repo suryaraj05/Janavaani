@@ -1,0 +1,8 @@
+{
+  "evidence": 0.35,
+  "demand": 0.30,
+  "confidence": 0.20,
+  "recency": 0.15,
+  "recency_half_life_days": 90,
+  "comment": "Tunable composite weights (§6). Loaded by score-runner; TS fallback in @pp/schema config.ts."
+}

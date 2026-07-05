@@ -12,6 +12,7 @@ import { resolveEvidence } from './evidence.js';
 import { loadEvidenceSpecs } from './evidenceSpecs.js';
 import { detectAnomalies } from './anomaly.js';
 import { generateJustification } from './justification.js';
+import { matchDevelopmentPlans } from './planMatching.js';
 
 export interface ScoreRunResult {
   clustersScored: number;
@@ -25,6 +26,8 @@ export interface ScoreRunResult {
 export async function runScoring(db: Firestore): Promise<ScoreRunResult> {
   const specs = loadEvidenceSpecs();
   const supported = new Set(specs.keys());
+
+  await matchDevelopmentPlans(db);
 
   const clusterSnap = await db.collection('clusters').get();
   const clusters = clusterSnap.docs;
@@ -106,6 +109,11 @@ export async function runScoring(db: Firestore): Promise<ScoreRunResult> {
 
     const anomaly = await detectAnomalies(db, doc.id);
 
+    const linkedPlan = data.linked_plan as
+      | { plan_id: string; title: string; status: string; source: string }
+      | null
+      | undefined;
+
     const justificationInput: JustificationInput = {
       cluster_title: data.canonical_title_en as string,
       category: data.category as string,
@@ -130,6 +138,7 @@ export async function runScoring(db: Firestore): Promise<ScoreRunResult> {
       },
       anomaly_flags: anomaly.flags,
       evidence_rows: evidence?.rows ?? [],
+      linked_plan: linkedPlan ?? null,
     };
 
     const justification = await generateJustification(justificationInput);

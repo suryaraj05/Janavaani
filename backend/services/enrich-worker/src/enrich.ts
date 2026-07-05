@@ -15,6 +15,7 @@ import {
   rescoreAllClusters,
 } from './clustering.js';
 import { embedText } from './embedding.js';
+import { writeSubmissionEmbedding } from './bigqueryEmbeddings.js';
 
 export interface EnrichRequest {
   submission_id: string;
@@ -158,6 +159,14 @@ export async function enrichSubmission(
   };
 
   await ref.set(enriched);
+  await writeSubmissionEmbedding({
+    submissionId: submission_id,
+    clusterId,
+    category: triage.category,
+    mandalCode: location.admin.mandal_code,
+    embedding,
+    canonicalSummary: triage.canonical_summary_en,
+  });
   await rescoreAllClusters(db);
 
   return { submission: enriched, cluster_id: clusterId };

@@ -1,0 +1,30 @@
+[
+  {
+    "plan_id": "plan_edu_sec_ghatkesar_fy25",
+    "title": "Upgrade village school beyond grade 7 to secondary school access near Ghatkesar",
+    "description": "District Development Plan FY25-26 proposes upgrading feeder schools in Ghatkesar mandal to include secondary grades so children do not travel 6 km to the nearest high school.",
+    "category": "education",
+    "subcategory": "school_upgrade",
+    "admin_scope": { "constituency_code": "PC-MALKAJGIRI", "mandal_code": "TS-0417" },
+    "status": "approved",
+    "estimated_cost": 42000000,
+    "estimated_beneficiaries": 850,
+    "source": "District Development Plan FY25-26",
+    "linked_cluster_id": null,
+    "is_simulated": true
+  },
+  {
+    "plan_id": "plan_roads_uppal_resurfacing",
+    "title": "Resurface Uppal main road junction near temple",
+    "description": "Municipal roads department proposed resurfacing of the Uppal junction approach road — unrelated to school access.",
+    "category": "roads",
+    "subcategory": "repair",
+    "admin_scope": { "constituency_code": "PC-MALKAJGIRI", "mandal_code": "TS-0419" },
+    "status": "proposed",
+    "estimated_cost": 8500000,
+    "estimated_beneficiaries": null,
+    "source": "Municipal Roads Plan FY25-26",
+    "linked_cluster_id": null,
+    "is_simulated": true
+  }
+]
