@@ -248,7 +248,7 @@ router.get('/:id', requireAuth, async (req, res) => {
   const userCitizenHash = hashCitizen(user.uid, getPepper());
   const submissionHash = (data.citizen as { citizen_hash?: string })?.citizen_hash;
 
-  if (!canReadSubmission(user, submissionHash, userCitizenHash)) {
+  if (!canReadSubmission(user, submissionHash, userCitizenHash, data as Record<string, unknown>)) {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
