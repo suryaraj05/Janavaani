@@ -52,7 +52,4 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: ENRICH_WORKER_URL
-        fromService:
-          type: web
-          name: janavaani-enrich
-          property: host
+        value: https://janavaani-enrich.onrender.com

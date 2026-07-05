@@ -4,6 +4,7 @@ import { getDb } from '../firebase.js';
 import { hashCitizen, getPepper } from '../crypto.js';
 import { requireAuth } from '../middleware/auth.js';
 import { ingestDraft } from '../services/ingest.js';
+import { retryPendingEnrichments } from '../services/retryEnrich.js';
 import { canReadSubmission, isStaffRole } from '../lib/submissionAccess.js';
 import {
   filterRealSubmissions,
@@ -86,6 +87,38 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/retry-enrich', requireAuth, async (req, res) => {
+  try {
+    const user = req.user!;
+    const pepper = getPepper();
+    const userCitizenHash = hashCitizen(user.uid, pepper);
+    const db = getDb();
+
+    const snapshot = await db
+      .collection('submissions')
+      .where('citizen.citizen_hash', '==', userCitizenHash)
+      .orderBy('created_at', 'desc')
+      .limit(30)
+      .get()
+      .catch(() =>
+        db.collection('submissions').where('citizen.citizen_hash', '==', userCitizenHash).limit(30).get(),
+      );
+
+    const pendingIds = snapshot.docs
+      .filter((d) => {
+        const data = d.data();
+        return data.cluster_id == null && data.ai == null && !isDemoSubmission(data as Record<string, unknown>);
+      })
+      .map((d) => d.id);
+
+    const { queued } = await retryPendingEnrichments(db, pendingIds);
+    res.json({ success: true, queued: queued.length, submission_ids: queued });
+  } catch (err) {
+    console.error('POST /submissions/retry-enrich error:', err);
+    res.status(500).json({ error: 'Failed to retry enrichment' });
+  }
+});
+
 router.get('/feed', requireAuth, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 30, 50);
@@ -136,6 +169,20 @@ router.get('/', requireAuth, async (req, res) => {
     }
     const raw = snapshot.docs.map((doc) => doc.data() as Record<string, unknown>);
     const submissions = filterRealSubmissions(raw);
+
+    if (scope === 'mine' && !isStaffRole(user.role)) {
+      const pendingIds = snapshot.docs
+        .filter((d) => {
+          const data = d.data();
+          return data.cluster_id == null && data.ai == null;
+        })
+        .slice(0, 5)
+        .map((d) => d.id);
+      if (pendingIds.length > 0) {
+        void retryPendingEnrichments(getDb(), pendingIds);
+      }
+    }
+
     res.json({ submissions });
   } catch (err) {
     console.error('GET /submissions error:', err);

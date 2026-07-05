@@ -3,6 +3,7 @@ loadEnv();
 import type { Server } from 'node:http';
 import { initFirebase } from './firebase.js';
 import { createApp } from './app.js';
+import { getEnrichWorkerUrl } from './config.js';
 
 initFirebase();
 
@@ -14,6 +15,7 @@ let server: Server | undefined;
 function start(): void {
   server = app.listen(port, () => {
     console.log(`intake-api listening on port ${port}`);
+    console.log(`enrich-worker URL: ${getEnrichWorkerUrl()}`);
   });
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
