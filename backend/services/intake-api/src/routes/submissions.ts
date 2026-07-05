@@ -190,6 +190,47 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
+/** Toggle upvote on a submission — one vote per Firebase UID. Client re-sorts feed. */
+router.post('/:id/upvote', requireAuth, async (req, res) => {
+  try {
+    const submissionId = String(req.params.id);
+    const uid = req.user!.uid;
+    const ref = getDb().collection('submissions').doc(submissionId);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+
+    const data = doc.data()!;
+    if (isDemoSubmission(data as Record<string, unknown>)) {
+      res.status(404).json({ error: 'Submission not found' });
+      return;
+    }
+
+    const meta = (data.channel_meta as Record<string, unknown>) ?? {};
+    const upvotedBy = [...((meta.upvoted_by as string[]) ?? [])];
+    const already = upvotedBy.includes(uid);
+
+    if (already) {
+      upvotedBy.splice(upvotedBy.indexOf(uid), 1);
+    } else {
+      upvotedBy.push(uid);
+    }
+
+    const upvotes = upvotedBy.length;
+    await ref.update({
+      'channel_meta.upvotes': upvotes,
+      'channel_meta.upvoted_by': upvotedBy,
+    });
+
+    res.json({ success: true, upvotes, upvoted: !already, upvoted_by: upvotedBy });
+  } catch (err) {
+    console.error('POST /submissions/:id/upvote error:', err);
+    res.status(500).json({ error: 'Failed to toggle upvote' });
+  }
+});
+
 router.get('/:id', requireAuth, async (req, res) => {
   const id = String(req.params.id);
   const doc = await getDb().collection('submissions').doc(id).get();

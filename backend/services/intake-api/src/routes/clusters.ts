@@ -84,12 +84,8 @@ router.get('/', requireAuth, async (_req, res) => {
 
     const clusters = snapshot.docs
       .map((doc) => doc.data())
-      .filter((c) => !isDemoSeedCluster(c as Record<string, unknown>))
-      .sort(
-        (a, b) =>
-          ((b.score as { total?: number })?.total ?? 0) -
-          ((a.score as { total?: number })?.total ?? 0),
-      );
+      .filter((c) => !isDemoSeedCluster(c as Record<string, unknown>));
+    // Client applies feed ranking — no server-side sort.
     res.json({ clusters });
   } catch (err) {
     console.error('GET /clusters error:', err);
@@ -105,6 +101,42 @@ router.get('/:id', requireAuth, async (req, res) => {
     return;
   }
   res.json({ cluster: doc.data() });
+});
+
+/** Toggle upvote on a cluster — one vote per Firebase UID. Client re-sorts feed. */
+router.post('/:id/upvote', requireAuth, async (req, res) => {
+  try {
+    const clusterId = String(req.params.id);
+    const uid = req.user!.uid;
+    const ref = getDb().collection('clusters').doc(clusterId);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      res.status(404).json({ error: 'Cluster not found' });
+      return;
+    }
+
+    const data = doc.data()!;
+    const stats = (data.stats as Record<string, unknown>) ?? {};
+    const upvotedBy = [...((stats.upvoted_by as string[]) ?? [])];
+    const already = upvotedBy.includes(uid);
+
+    if (already) {
+      upvotedBy.splice(upvotedBy.indexOf(uid), 1);
+    } else {
+      upvotedBy.push(uid);
+    }
+
+    const upvotes = upvotedBy.length;
+    await ref.update({
+      'stats.upvotes': upvotes,
+      'stats.upvoted_by': upvotedBy,
+    });
+
+    res.json({ success: true, upvotes, upvoted: !already, upvoted_by: upvotedBy });
+  } catch (err) {
+    console.error('POST /clusters/:id/upvote error:', err);
+    res.status(500).json({ error: 'Failed to toggle upvote' });
+  }
 });
 
 router.patch(

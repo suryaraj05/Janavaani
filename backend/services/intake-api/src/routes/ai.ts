@@ -93,6 +93,13 @@ router.post('/check-duplicates', requireAuth, async (req, res) => {
 
       similarGrievances.push({
         grievanceId: g.grievanceId ?? g.id ?? g.submission_id,
+        submission_id: g.submission_id ?? g.grievanceId ?? g.id,
+        cluster_id: g.cluster_id ?? null,
+        title: gTitle,
+        description: String(g.description ?? ''),
+        priority: String(g.priority ?? 'medium'),
+        status: String(g.status ?? 'submitted'),
+        upvotes: (g.upvotes as number) ?? 0,
         similarityScore: combined,
         reason:
           combined > 0.9
