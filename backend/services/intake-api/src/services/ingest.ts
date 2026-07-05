@@ -60,11 +60,16 @@ export async function ingestDraft(
   };
 
   await db.collection('submissions').doc(submissionId).set(rawSubmission);
-  const enriched = await enrichSubmission(submissionId, draft, opts.mediaBase64);
+
+  // Enrich in background so POST returns before Render's request timeout.
+  // The app shows success immediately; AI results appear after enrich completes.
+  void enrichSubmission(submissionId, draft, opts.mediaBase64).catch((err) => {
+    console.error(`Background enrich failed for ${submissionId}:`, err);
+  });
 
   return {
     submission_id: submissionId,
-    cluster_id: enriched.cluster_id,
-    submission: enriched.submission,
+    cluster_id: null as unknown as string,
+    submission: rawSubmission,
   };
 }

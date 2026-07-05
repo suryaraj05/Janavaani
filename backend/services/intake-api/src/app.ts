@@ -6,6 +6,9 @@ import authRouter from './routes/auth.js';
 import ingestRouter from './routes/ingest.js';
 import identityRouter from './routes/identity.js';
 import whatsappRouter from './routes/whatsapp.js';
+import aiRouter from './routes/ai.js';
+import { getConstituencyCode, getConstituencyName } from './config.js';
+import { JANAVAANI_DEPARTMENTS } from './services/analyze.js';
 
 export function createApp(): express.Application {
   const app = express();
@@ -47,14 +50,18 @@ export function createApp(): express.Application {
     res.json({
       success: true,
       data: {
-        departments: ['Education', 'Roads', 'Water', 'Health', 'Electricity'],
+        constituencyCode: getConstituencyCode(),
+        constituencyName: getConstituencyName(),
+        departments: [...JANAVAANI_DEPARTMENTS],
+        categories: [...JANAVAANI_DEPARTMENTS],
         priorities: ['low', 'medium', 'high', 'urgent'],
-        statuses: ['submitted', 'in_progress', 'resolved'],
+        statuses: ['submitted', 'assigned', 'in_progress', 'resolved', 'closed', 'rejected'],
       },
     });
   });
 
   app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/ai', aiRouter);
   app.use('/api/v1/submissions', submissionsRouter);
   app.use('/api/v1/clusters', clustersRouter);
   app.use('/api/v1/ingest', ingestRouter);

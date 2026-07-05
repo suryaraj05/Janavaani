@@ -72,12 +72,19 @@ function appendHistory(existing: Record<string, unknown>, action: string, by: st
   };
 }
 
+function isDemoSeedCluster(data: Record<string, unknown>): boolean {
+  const history =
+    (data.lifecycle as { history?: Array<{ action?: string }> })?.history ?? [];
+  return history.some((h) => h.action === 'seeded');
+}
+
 router.get('/', requireAuth, async (_req, res) => {
   try {
     const snapshot = await getDb().collection('clusters').limit(100).get();
 
     const clusters = snapshot.docs
       .map((doc) => doc.data())
+      .filter((c) => !isDemoSeedCluster(c as Record<string, unknown>))
       .sort(
         (a, b) =>
           ((b.score as { total?: number })?.total ?? 0) -

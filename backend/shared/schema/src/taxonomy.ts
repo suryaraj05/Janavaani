@@ -37,7 +37,7 @@ export const SourceSchema = z.enum([
   'portal_mock',
   'meta_mock',
 ]);
-export const ModalitySchema = z.enum(['text', 'voice', 'photo_text', 'video_comment']);
+export const ModalitySchema = z.enum(['text', 'voice', 'photo_text', 'video_comment', 'letter']);
 export const AuthKindSchema = z.enum([
   'firebase_uid',
   'whatsapp_phone',

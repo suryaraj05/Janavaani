@@ -47,6 +47,8 @@ services:
         sync: false
       - key: CONSTITUENCY_CODE
         value: PC-MALKAJGIRI
+      - key: CONSTITUENCY_NAME
+        value: Malkajgiri
       - key: GEMINI_API_KEY
         sync: false
       - key: ENRICH_WORKER_URL

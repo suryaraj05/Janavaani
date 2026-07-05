@@ -6,6 +6,10 @@ export function getConstituencyCode(): string {
   return process.env.CONSTITUENCY_CODE?.trim() ?? 'PC-MALKAJGIRI';
 }
 
+export function getConstituencyName(): string {
+  return process.env.CONSTITUENCY_NAME?.trim() ?? 'Malkajgiri';
+}
+
 export function getConstituencyBbox(): [number, number, number, number] {
   const raw = process.env.CONSTITUENCY_BBOX?.trim();
   if (raw) {

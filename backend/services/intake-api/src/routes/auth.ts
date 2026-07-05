@@ -104,9 +104,23 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', requireAuth, async (req: Request, res: Response) => {
   try {
-    const userDoc = await getDb().collection('users').doc(req.user!.uid).get();
+    const uid = req.user!.uid;
+    const userRef = getDb().collection('users').doc(uid);
+    const userDoc = await userRef.get();
     if (!userDoc.exists) {
-      res.status(404).json({ success: false, message: 'User profile not found' });
+      const userData = {
+        uid,
+        email: req.user!.email ?? null,
+        displayName: req.user!.displayName ?? 'Citizen',
+        role: 'citizen',
+        displayLocale: 'en',
+        phoneNumber: null,
+        department: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await userRef.set(userData);
+      ok(res, userData);
       return;
     }
     ok(res, userDoc.data() as Record<string, unknown>);

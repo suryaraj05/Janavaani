@@ -26,12 +26,52 @@ router.post('/', requireAuth, async (req, res) => {
     const citizenHash =
       draft.citizen.citizen_hash ?? (req.user ? hashCitizen(req.user.uid, pepper) : null);
 
+    const meta = draft.channel_meta as Record<string, unknown>;
+    const title = String(meta.title ?? '').trim();
+    if (title && req.user) {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const recent = await getDb()
+        .collection('submissions')
+        .where('citizen.citizen_hash', '==', citizenHash)
+        .orderBy('created_at', 'desc')
+        .limit(20)
+        .get()
+        .catch(async () =>
+          getDb()
+            .collection('submissions')
+            .where('citizen.citizen_hash', '==', citizenHash)
+            .limit(20)
+            .get(),
+        );
+
+      const duplicate = recent.docs.some((doc) => {
+        const d = doc.data();
+        const m = d.channel_meta as Record<string, unknown> | undefined;
+        const existingTitle = String(m?.title ?? d.ai?.canonical_summary_en ?? '').trim();
+        const created = String(d.created_at ?? '');
+        return (
+          existingTitle.toLowerCase() === title.toLowerCase() &&
+          created >= fiveMinAgo
+        );
+      });
+
+      if (duplicate) {
+        res.status(409).json({
+          success: false,
+          error: 'duplicate',
+          message:
+            'You recently submitted a report with the same title. Please wait a few minutes or change the title.',
+        });
+        return;
+      }
+    }
+
     const result = await ingestDraft(getDb(), draft, {
       citizenHash,
       mediaBase64: body.mediaBase64,
     });
 
-    res.status(201).json(result);
+    res.status(201).json({ success: true, ...result });
   } catch (err) {
     console.error('POST /submissions error:', err);
     res.status(500).json({
@@ -48,17 +88,29 @@ router.get('/', requireAuth, async (req, res) => {
     const pepper = getPepper();
     const userCitizenHash = hashCitizen(user.uid, pepper);
 
-    let query = getDb().collection('submissions').orderBy('created_at', 'desc').limit(limit);
-
+    let snapshot;
     if (!isStaffRole(user.role)) {
-      query = getDb()
+      try {
+        snapshot = await getDb()
+          .collection('submissions')
+          .where('citizen.citizen_hash', '==', userCitizenHash)
+          .orderBy('created_at', 'desc')
+          .limit(limit)
+          .get();
+      } catch {
+        snapshot = await getDb()
+          .collection('submissions')
+          .where('citizen.citizen_hash', '==', userCitizenHash)
+          .limit(limit)
+          .get();
+      }
+    } else {
+      snapshot = await getDb()
         .collection('submissions')
-        .where('citizen.citizen_hash', '==', userCitizenHash)
         .orderBy('created_at', 'desc')
-        .limit(limit);
+        .limit(limit)
+        .get();
     }
-
-    const snapshot = await query.get();
     const submissions = snapshot.docs.map((doc) => doc.data());
     res.json({ submissions });
   } catch (err) {
