@@ -1,0 +1,14 @@
+# Railway service: enrich-worker (internal — intake-api calls via ENRICH_WORKER_URL)
+# Set build variable: SERVICE=enrich-worker
+# After deploy, set on intake-api: ENRICH_WORKER_URL=http://enrich-worker.railway.internal:${PORT}
+# (Use the enrich-worker service's private domain from Railway networking tab)
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "infra/Dockerfile"
+watchPatterns = ["services/enrich-worker/**", "shared/schema/**", "infra/Dockerfile"]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"

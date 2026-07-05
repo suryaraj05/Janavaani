@@ -1,0 +1,37 @@
+# Janavaani monorepo
+
+# Secrets — never commit
+.env
+backend/.env
+backend/infra/serviceAccountKey.json
+backend/infra/Bigquery.json
+backend/infra/bigquery.json
+**/*serviceAccount*.json
+
+# Node
+node_modules/
+backend/node_modules/
+**/dist/
+*.log
+
+# Flutter
+app/build/
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+
+# Local-only / reference
+campus-connect/
+docs/legacy/
+CURSOR_FIX_PROMPT.md
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Cursor agent artifacts
+.cursor/

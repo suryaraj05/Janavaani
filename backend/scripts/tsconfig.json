@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "rootDir": "..",
+    "baseUrl": "..",
+    "paths": {
+      "@pp/schema": ["shared/schema/src/index.ts"]
+    }
+  },
+  "include": ["./**/*.ts", "../shared/schema/src/**/*.ts"]
+}

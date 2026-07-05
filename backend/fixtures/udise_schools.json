@@ -1,0 +1,9 @@
+[
+  { "udise_code": "36170100101", "school_name": "ZPHS Ghatkesar feeder A", "mgmt_type": "govt", "highest_class": 8, "lat": 17.4432, "lng": 78.6829, "mandal_code": "TS-0417", "enr_g6": 160, "enr_g7": 145, "enr_g8": 107 },
+  { "udise_code": "36170100102", "school_name": "MPPS Ghatkesar feeder B", "mgmt_type": "govt", "highest_class": 7, "lat": 17.4460, "lng": 78.6900, "mandal_code": "TS-0417", "enr_g6": 55, "enr_g7": 45, "enr_g8": 0 },
+  { "udise_code": "36170100103", "school_name": "Aided UP School Ghatkesar", "mgmt_type": "aided", "highest_class": 8, "lat": 17.4400, "lng": 78.6750, "mandal_code": "TS-0417", "enr_g6": 40, "enr_g7": 38, "enr_g8": 32 },
+  { "udise_code": "36170200201", "school_name": "Govt HS Kushaiguda", "mgmt_type": "govt", "highest_class": 10, "lat": 17.4900, "lng": 78.5600, "mandal_code": "TS-0418", "enr_g9": 95, "enr_g10": 88 },
+  { "udise_code": "36170200202", "school_name": "Govt UP Kushaiguda", "mgmt_type": "govt", "highest_class": 8, "lat": 17.4910, "lng": 78.5620, "mandal_code": "TS-0418", "enr_g6": 40, "enr_g7": 35, "enr_g8": 30 },
+  { "udise_code": "36170300301", "school_name": "Govt HS Uppal", "mgmt_type": "govt", "highest_class": 10, "lat": 17.4050, "lng": 78.5590, "mandal_code": "TS-0419", "enr_g9": 110, "enr_g10": 102 },
+  { "udise_code": "36170300302", "school_name": "Govt UP Uppal", "mgmt_type": "govt", "highest_class": 8, "lat": 17.4060, "lng": 78.5600, "mandal_code": "TS-0419", "enr_g6": 70, "enr_g7": 62, "enr_g8": 58 }
+]

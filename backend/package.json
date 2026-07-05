@@ -1,0 +1,41 @@
+{
+  "name": "janavaani-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Janavaani API — intake, enrich, score, connectors",
+  "workspaces": [
+    "shared/schema",
+    "services/intake-api",
+    "services/enrich-worker",
+    "services/connectors",
+    "services/score-runner"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run build -w @pp/schema && npx tsc --noEmit -p shared/schema && npx tsc --noEmit -p services/intake-api && npx tsc --noEmit -p services/enrich-worker && npx tsc --noEmit -p services/connectors && npx tsc --noEmit -p services/score-runner && npx tsc --noEmit -p scripts",
+    "test": "npm test --workspaces --if-present && npm run test:golden",
+    "test:golden": "node --import tsx --test test/golden/*.test.ts",
+    "dev:intake": "npm run dev -w @pp/intake-api",
+    "dev:enrich": "npm run dev -w @pp/enrich-worker",
+    "dev:connectors": "npm run dev -w @pp/connectors",
+    "dev:score": "npm run dev -w @pp/score-runner",
+    "dev:stack": "concurrently -k -n enrich,intake,score,connectors -c blue,green,yellow,magenta \"npm run dev:enrich\" \"npm run dev:intake\" \"npm run dev:score\" \"npm run dev:connectors\"",
+    "seed": "tsx scripts/seed.ts",
+    "replay": "tsx scripts/replay.ts",
+    "score": "curl -X POST http://localhost:8083/run",
+    "eval:clustering": "tsx scripts/eval_clustering.ts test/labeled_pairs.example.csv",
+    "smoke": "tsx scripts/smoke_test.ts",
+    "e2e": "tsx scripts/e2e_verify.ts",
+    "dev:local": "powershell -ExecutionPolicy Bypass -File scripts/dev-local.ps1",
+    "stop:dev": "powershell -ExecutionPolicy Bypass -File scripts/stop-dev.ps1",
+    "prepare:demo": "powershell -ExecutionPolicy Bypass -File scripts/prepare-demo.ps1",
+    "verify:backend": "powershell -ExecutionPolicy Bypass -File scripts/verify-backend.ps1",
+    "load:udise": "tsx scripts/load_udise.ts",
+    "load:boundaries": "tsx scripts/load_boundaries.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

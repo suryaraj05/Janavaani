@@ -1,0 +1,15 @@
+{
+  "name": "janavaani",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Janavaani — citizen voice to ranked priorities (monorepo)",
+  "scripts": {
+    "install:backend": "npm install --prefix backend",
+    "dev:backend": "npm run dev:stack --prefix backend",
+    "dev:app": "cd app && flutter run -d web-server --web-port=5050 --web-hostname=localhost --dart-define=INTAKE_PORT=8092",
+    "stop:dev": "npm run stop:dev --prefix backend",
+    "verify:backend": "npm run verify:backend --prefix backend",
+    "test": "npm test --prefix backend",
+    "prepare:demo": "npm run prepare:demo --prefix backend"
+  }
+}

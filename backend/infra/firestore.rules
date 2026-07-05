@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isStaff() {
+      return isSignedIn() && userRole() in ['mp_staff', 'mp'];
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /submissions/{submissionId} {
+      allow create: if isSignedIn();
+      allow read: if isStaff();
+      allow update, delete: if false;
+    }
+
+    match /clusters/{clusterId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /link_codes/{codeId} {
+      allow read, write: if false;
+    }
+  }
+}

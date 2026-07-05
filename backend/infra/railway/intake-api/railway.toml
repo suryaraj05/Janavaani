@@ -1,0 +1,13 @@
+# Railway service: intake-api (public REST API — point Flutter at this URL)
+# Create a Railway service from repo root with config path: infra/railway/intake-api/railway.toml
+# Set build variable in Railway dashboard: SERVICE=intake-api
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "infra/Dockerfile"
+watchPatterns = ["services/intake-api/**", "shared/schema/**", "infra/Dockerfile"]
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"

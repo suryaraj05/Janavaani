@@ -1,0 +1,12 @@
+indicators:
+  - name: seat_gap
+    weight: 0.5
+    sql_file: sql/evidence_education_school_upgrade.sql
+  - name: road_km_est
+    weight: 0.3
+  - name: pipeline_per_school
+    weight: 0.2
+dataset:
+  name: UDISE+
+  ref_year: "2024-25"
+  citation: "udiseplus.gov.in school report cards"
