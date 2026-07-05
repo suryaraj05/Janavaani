@@ -161,6 +161,7 @@ Free tier sleeps after ~15 min idle.
 | Build fails `npm ci` | Check Render logs; ensure root dir is `backend` |
 | Service crashes on start | Missing `FIREBASE_PRIVATE_KEY` — check newlines |
 | `/health` 502 | Wait for deploy; check logs for Firebase init errors |
+| `Failed to parse private key` / `DECODER routines::unsupported` | Wrong `FIREBASE_PRIVATE_KEY` format — see **Firebase key fix** below |
 | Register works locally but not prod | Set Flutter `API_BASE_URL` to Render intake URL |
 | Submissions hang | `ENRICH_WORKER_URL` must be full `https://...` enrich URL |
 | CORS errors | intake-api already uses `cors()` — wrong API URL in app |
@@ -174,3 +175,37 @@ Free tier sleeps after ~15 min idle.
 - Local `.env` file upload
 
 Use Render **Environment** tab for secrets only.
+
+---
+
+## Firebase key fix (`Failed to parse private key`)
+
+Build succeeds but deploy crashes with `DECODER routines::unsupported` → **`FIREBASE_PRIVATE_KEY` is malformed** on Render.
+
+### Fix (2 minutes)
+
+1. Locally run (prints values from your service account file — do not commit output):
+
+   ```powershell
+   cd backend
+   npm run print:render-firebase-key
+   ```
+
+2. Render → **janavaani-intake** → **Environment** → edit **`FIREBASE_PRIVATE_KEY`**
+3. **Delete** the current value completely
+4. Paste **only** the `FIREBASE_PRIVATE_KEY` line from the script (starts with `-----BEGIN PRIVATE KEY-----\n`)
+5. **Do not** wrap in extra quotes — Render adds its own
+6. **Do not** paste the whole JSON file — only the private key string
+7. Repeat for **janavaani-enrich** (same three Firebase vars)
+8. **Save** → **Manual Deploy** on each service
+
+### Common mistakes
+
+| Mistake | Result |
+|---------|--------|
+| Pasted entire `serviceAccountKey.json` | Decoder error |
+| Extra `"` quotes around the key | Decoder error |
+| Real line breaks in Render textarea (sometimes) | Can work, but `\n` escaped form is safer |
+| Key truncated / missing `END PRIVATE KEY` | Decoder error |
+
+After fix, logs should show the server starting without Firebase errors, and `/health` returns 200.

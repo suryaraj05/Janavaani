@@ -8,6 +8,52 @@ export interface FirebaseServiceAccount {
   privateKey: string;
 }
 
+/** Normalize PEM private key from env / copy-paste (Render, Railway, etc.). */
+export function normalizeFirebasePrivateKey(raw: string): string {
+  let key = raw.trim();
+
+  for (let i = 0; i < 2; i++) {
+    if (
+      (key.startsWith('"') && key.endsWith('"')) ||
+      (key.startsWith("'") && key.endsWith("'"))
+    ) {
+      key = key.slice(1, -1).trim();
+    }
+  }
+
+  // Whole service-account JSON pasted into FIREBASE_PRIVATE_KEY by mistake.
+  if (key.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(key) as { private_key?: string };
+      if (typeof parsed.private_key === 'string') {
+        key = parsed.private_key;
+      }
+    } catch {
+      /* not JSON */
+    }
+  }
+
+  key = key.replace(/\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  // PEM pasted as one line (common from env converters).
+  if (!key.includes('\n') && key.includes('-----BEGIN PRIVATE KEY-----')) {
+    key = key
+      .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
+      .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----');
+    if (!key.endsWith('\n')) key += '\n';
+  }
+
+  return key;
+}
+
+export function isValidFirebasePrivateKey(key: string): boolean {
+  return (
+    key.includes('-----BEGIN PRIVATE KEY-----') &&
+    key.includes('-----END PRIVATE KEY-----') &&
+    key.length > 100
+  );
+}
+
 /** Resolve a repo-relative path like `infra/serviceAccountKey.json`. */
 export function resolveServiceAccountPath(configured: string): string {
   if (existsSync(configured)) return configured;
@@ -44,17 +90,18 @@ export function resolveFirebaseCredentials(): FirebaseServiceAccount | null {
   const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY?.trim();
   if (!projectId || !clientEmail || !privateKeyRaw) return null;
 
-  let key = privateKeyRaw;
-  if (
-    (key.startsWith('"') && key.endsWith('"')) ||
-    (key.startsWith("'") && key.endsWith("'"))
-  ) {
-    key = key.slice(1, -1);
+  const privateKey = normalizeFirebasePrivateKey(privateKeyRaw);
+  if (!isValidFirebasePrivateKey(privateKey)) {
+    console.error(
+      'FIREBASE_PRIVATE_KEY looks invalid — expected PEM with BEGIN/END PRIVATE KEY lines.\n' +
+        'Run: npm run print:render-firebase-key --prefix backend',
+    );
   }
+
   return {
     projectId,
     clientEmail,
-    privateKey: key.replace(/\\n/g, '\n'),
+    privateKey,
   };
 }
 

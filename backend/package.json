@@ -30,6 +30,7 @@
     "stop:dev": "powershell -ExecutionPolicy Bypass -File scripts/stop-dev.ps1",
     "prepare:demo": "powershell -ExecutionPolicy Bypass -File scripts/prepare-demo.ps1",
     "verify:backend": "powershell -ExecutionPolicy Bypass -File scripts/verify-backend.ps1",
+    "print:render-firebase-key": "node scripts/print-render-firebase-key.mjs",
     "load:udise": "tsx scripts/load_udise.ts",
     "load:boundaries": "tsx scripts/load_boundaries.ts"
   },
