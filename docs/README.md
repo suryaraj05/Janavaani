@@ -1,10 +1,9 @@
-# Design documentation
+# Janavaani documentation
 
 | Document | Description |
 |----------|-------------|
-| [peoples-priorities-architecture.md](./peoples-priorities-architecture.md) | Full technical architecture (v1.1) |
-| [peoples-priorities-review-and-build-prompt.md](./peoples-priorities-review-and-build-prompt.md) | Feature validation, gaps, and Cursor build prompt |
-
-## Legacy reference
-
-- [legacy/campus-connect-app/](./legacy/campus-connect-app/) — setup guides inherited from the forked campus-connect Flutter app.
+| [peoples-priorities-architecture.md](./peoples-priorities-architecture.md) | Full technical architecture |
+| [peoples-priorities-review-and-build-prompt.md](./peoples-priorities-review-and-build-prompt.md) | Build prompt and feature spec |
+| [CURRENT_STATE.md](./CURRENT_STATE.md) | What works today, local dev, troubleshooting |
+| [DEPLOY.md](./DEPLOY.md) | **Where to deploy backend + app (Vercel vs Render vs Railway)** |
+| [RAILWAY_DEPLOY.md](./RAILWAY_DEPLOY.md) | Railway-specific steps (optional) |

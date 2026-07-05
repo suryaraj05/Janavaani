@@ -22,7 +22,6 @@ app/.flutter-plugins-dependencies
 app/.packages
 
 # Local-only / reference
-campus-connect/
 docs/legacy/
 CURSOR_FIX_PROMPT.md
 

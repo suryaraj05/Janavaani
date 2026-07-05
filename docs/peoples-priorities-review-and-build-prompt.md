@@ -124,7 +124,7 @@ Verdict first: **the v1.0 architecture is complete for the stated brief.** Nothi
 ### 4.2 Phased plan (no dates)
 
 **Phase 1 — the spine** *(unchanged from v1.0 + item 1's offline flag, identity-linking UI stub)*
-Fork campus-connect → monorepo; schema + Firestore rules; app intake (voice/photo/GPS/language picker, offline enabled); triage v1 synchronous; interim demand+recency ranked list; Cloud Run deploy. *Exit: Telugu voice note in app → enriched record on dashboard.*
+Monorepo scaffold; schema + Firestore rules; app intake (voice/photo/GPS/language picker, offline enabled); triage v1 synchronous; interim demand+recency ranked list; Cloud Run deploy. *Exit: Telugu voice note in app → enriched record on dashboard.*
 
 **Phase 2 — the intelligence** *(v1.0 scope + cluster-repair worker logic + identity-linking backend)*
 Pub/Sub decoupling; WhatsApp E2E; BigQuery boundaries/LGD/UDISE+ ETL; embeddings + clustering + threshold labeling; evidence SQL + composite scoring; score-runner + Scheduler; dashboard v2 (score bars, map, review queue, **repair actions**); **identity link + hash migration**. *Exit: v1.0 §4.3 cross-language test passes; flagship comparison ranks correctly on real UDISE+ numbers; a staff split/merge visibly corrects counts and rank.*
@@ -152,7 +152,7 @@ Work in three phases, strictly in order. Do not start a phase until the previous
 
 ## Starting point
 
-You are working in a fork of `campus-connect`: Flutter app + Node.js/Express + Firebase (Auth, Firestore) + Gemini, previously a campus grievance system. Reuse aggressively: the submission form flow, Firebase Auth wiring, role-based access, the Gemini call pattern, the Nominatim geocoding module, and the status-lifecycle UI pattern all carry over with modifications described below. Do not rebuild what can be adapted.
+Janavaani is a Flutter app + Node.js/Express + Firebase (Auth, Firestore) + Gemini system. Core building blocks: the submission form flow, Firebase Auth wiring, role-based access, the Gemini call pattern, the Nominatim geocoding module, and the status-lifecycle UI pattern.
 
 ## Tech stack (pinned — do not substitute)
 

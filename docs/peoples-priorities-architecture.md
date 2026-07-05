@@ -1,8 +1,8 @@
-# People's Priorities — Technical Architecture
+# Janavaani — Technical Architecture
 
-**Hackathon:** Google Cloud "Build with AI" — civic-tech track
-**Team size:** 3–4 · **Base repo:** `campus-connect` (Flutter + Node.js/Express + Firebase + Gemini)
-**Status:** Design v1.1 — ready to build from *(v1.1: triage model updated to `gemini-3.5-flash` after its May 2026 GA — see companion review doc §2)*
+**Track:** civic-tech · AI-assisted governance
+**Stack:** Flutter + Node.js/Express + Firebase + Gemini
+**Status:** Design v1.1 *(triage model `gemini-3.5-flash` after its May 2026 GA — see companion review doc §2)*
 
 ---
 
@@ -12,34 +12,34 @@ Citizens send development requests the way they already communicate — a voice 
 
 Each merged demand is then pinned to an administrative unit (village/ward/mandal) and checked against real public data — the flagship being UDISE+ school records, so a school-upgrade request is scored against actual enrollment, school capacity, and travel distance in that exact area. Citizen demand, data-backed need, evidence quality, and recency combine into one priority score. The MP's dashboard shows a ranked list and a hotspot map, and every rank comes with a plain-English "why": *"Ranked #2: 31 citizens across 3 channels; UDISE+ shows 412 upper-primary students in this mandal with no secondary school within 5 km."*
 
-It is campus-connect's proven triage-and-lifecycle pipeline, widened from one campus to one constituency, with three genuinely new layers: cross-language demand clustering, an evidence-grounding pipeline over BigQuery, and a composite ranking model. Everything runs on Google Cloud free tier except the seams explicitly called out. Integrations that can't legally or practically be live today (government grievance portals, Meta platforms) are built as pluggable connectors running on clearly-labeled fixture data.
+The system pairs a proven triage-and-lifecycle pipeline at constituency scale with three core layers: cross-language demand clustering, an evidence-grounding pipeline over BigQuery, and a composite ranking model. Everything runs on Google Cloud free tier except the seams explicitly called out. Integrations that can't legally or practically be live today (government grievance portals, Meta platforms) are built as pluggable connectors running on clearly-labeled fixture data.
 
 ---
 
 ## 1. System architecture
 
-### 1.1 What carries over from campus-connect
+### 1.1 Core building blocks
 
-| Component | Disposition | Notes |
-|---|---|---|
-| Flutter app shell, auth flows, submission form (photo+text) | **As-is** | Rebrand; add language picker + voice recorder |
-| Node.js/Express API on Firebase/Cloud Run | **As-is** | Becomes `intake-api`; new routes only |
-| Firebase Auth + role-based access (citizen/department/admin) | **Modified** | Roles remap: citizen / MP-staff / MP. "Department" routing logic is repurposed as category routing |
-| Gemini multimodal triage (classify, prioritize, duplicate-flag) | **Modified** | Prompt rewritten (§3a): adds language ID, translation, canonical English restatement, location extraction. Its per-submission duplicate-flag is replaced by embedding clustering (§4) |
-| Lifecycle model (submitted → assigned → in-progress → resolved) | **Modified** | Becomes cluster-level, not submission-level: acknowledged → under-review → recommended → taken-up → completed. Submissions inherit their cluster's status |
-| OSM/Nominatim geocoding | **As-is + extended** | Kept as primary geocoder; new: point-in-polygon admin-unit assignment in BigQuery (§5) |
-| Priority-weighted feed (priority + upvotes + recency) | **Replaced** | Superseded by the composite evidence-grounded score (§6). The feed UI pattern survives as the dashboard's ranked list |
-| **Genuinely new** | — | WhatsApp connector, meeting-transcript extraction, YouTube poller, mock-connector framework, embedding clustering, BigQuery evidence plane, composite scoring, MP dashboard with map + "why" panel |
+| Component | Notes |
+|---|---|
+| Flutter app shell, auth flows, submission form (voice/photo/text) | Language picker + voice recorder; role-gated citizen / MP-staff / MP |
+| Node.js/Express API (`intake-api`) on Firebase/Cloud Run | REST + webhooks; category routing |
+| Firebase Auth + role-based access | citizen / MP-staff / MP |
+| Gemini multimodal triage | Language ID, translation, canonical English restatement, location extraction (§3a) |
+| Cluster lifecycle model | acknowledged → under-review → recommended → taken-up → completed. Submissions inherit their cluster's status |
+| OSM/Nominatim geocoding | Primary geocoder + point-in-polygon admin-unit assignment in BigQuery (§5) |
+| Composite ranked dashboard | Evidence-grounded score (§6) drives the ranked list |
+| Core capabilities | WhatsApp connector, meeting-transcript extraction, YouTube poller, mock-connector framework, embedding clustering, BigQuery evidence plane, composite scoring, MP dashboard with map + "why" panel |
 
 ### 1.2 Two-plane design
 
-**Firestore is the operational plane** — source of truth for submissions, clusters, users, lifecycle status; what the apps read/write in real time. **BigQuery is the analytics plane** — embeddings, vector clustering, GIS boundary joins, the UDISE+ evidence dataset, and scoring SQL. A one-way sync (Pub/Sub → worker) copies enriched submissions into BigQuery; a scheduled scoring job writes cluster scores *back* to Firestore for the dashboard. This split exists because clustering/evidence/scoring are batch-shaped joins over public datasets — BigQuery's home turf — while the app needs Firestore's realtime listeners and offline support, which campus-connect already uses.
+**Firestore is the operational plane** — source of truth for submissions, clusters, users, lifecycle status; what the apps read/write in real time. **BigQuery is the analytics plane** — embeddings, vector clustering, GIS boundary joins, the UDISE+ evidence dataset, and scoring SQL. A one-way sync (Pub/Sub → worker) copies enriched submissions into BigQuery; a scheduled scoring job writes cluster scores *back* to Firestore for the dashboard. This split exists because clustering/evidence/scoring are batch-shaped joins over public datasets — BigQuery's home turf — while the app needs Firestore's realtime listeners and offline support.
 
 **Rejected:** Vertex AI Vector Search — deployed index endpoints bill per node-hour 24/7 with no free tier (realistically [$400–800/month floor](https://www.cloudzero.com/blog/google-vertex-ai-pricing/)), unjustifiable when clustering is async and BigQuery `VECTOR_SEARCH` is serverless within the free query tier. Pinecone — off-GCP, disqualified by track rules and adds a vendor. Firestore native KNN vector search — viable, but it would put clustering in a different engine from evidence joins and scoring; one analytics plane beats two half-planes. PostGIS on Cloud SQL — no meaningful free tier for an always-on instance; BigQuery GIS (`ST_CONTAINS`, `ST_DISTANCE`) covers every geo operation we need.
 
 ### 1.3 Services (all Cloud Run)
 
-- **`intake-api`** (Node/Express, evolved from campus-connect): REST for the Flutter apps; webhook receivers for WhatsApp and connector pushes; normalizes everything into the Unified Submission (§2); writes Firestore; publishes `submission.created` to Pub/Sub.
+- **`intake-api`** (Node/Express): REST for the Flutter apps; webhook receivers for WhatsApp and connector pushes; normalizes everything into the Unified Submission (§2); writes Firestore; publishes `submission.created` to Pub/Sub.
 - **`enrich-worker`** (Pub/Sub push subscriber): runs Gemini triage (§3a), generates the embedding, geocodes + assigns admin unit, writes enrichment back to Firestore and inserts the row into BigQuery, then runs the cluster-assignment query (§4).
 - **`connectors`** (scheduled + webhook): YouTube poller (real), mock portal/Meta fixture replayers (§8). Each implements one interface, all output Unified Submissions into `intake-api`.
 - **`score-runner`** (Cloud Scheduler, every 30 min): executes scoring SQL (§6) over clusters × evidence in BigQuery, calls Gemini for "why" justifications on clusters whose score components changed (§3c), writes ranked results to Firestore `clusters` collection.
@@ -218,7 +218,7 @@ All prompts run on **Gemini 3.5 Flash** (`gemini-3.5-flash`, GA since May 2026) 
 
 ### 3a. Multimodal triage + classification (per submission)
 
-Direct descendant of campus-connect's triage prompt; the deltas are language handling, canonical restatement (which feeds the embedding — the most important field in the system), location-mention extraction, and PII scrubbing.
+A structured triage prompt whose key elements are language handling, canonical restatement (which feeds the embedding — the most important field in the system), location-mention extraction, and PII scrubbing.
 
 **System prompt:**
 
@@ -467,7 +467,7 @@ The last row is the point: the vocational-centre demand stays a *separate* track
 
 ### 5.1 Geocoding → administrative unit
 
-Three tiers, in order: **(1)** device GPS / photo EXIF (app path) — `geocode_confidence: high`. **(2)** Nominatim (carried over from campus-connect) on Gemini-extracted `location_mentions`, with `viewbox` + `bounded=1` set to the constituency bounding box so "Ghatkesar" can't resolve to a same-named place two states away; single unambiguous hit → `medium`. Google Geocoding API as fallback for the ~15–25% Nominatim misses on colloquial names (within the [10K free calls/SKU/month Essentials tier](https://mapsplatform.google.com/resources/blog/start-building-today-with-up-to-10-000-monthly-free-calls-per-product/)). **(3)** No resolvable location → `none`; item enters staff review with a map-pin UI (one tap fixes it, `method: staff_pin`, confidence → high). This is honest about a real problem: "near the old tank behind the temple" does not geocode, and pretending otherwise corrupts every downstream number — §12.
+Three tiers, in order: **(1)** device GPS / photo EXIF (app path) — `geocode_confidence: high`. **(2)** Nominatim on Gemini-extracted `location_mentions`, with `viewbox` + `bounded=1` set to the constituency bounding box so "Ghatkesar" can't resolve to a same-named place two states away; single unambiguous hit → `medium`. Google Geocoding API as fallback for the ~15–25% Nominatim misses on colloquial names (within the [10K free calls/SKU/month Essentials tier](https://mapsplatform.google.com/resources/blog/start-building-today-with-up-to-10-000-monthly-free-calls-per-product/)). **(3)** No resolvable location → `none`; item enters staff review with a map-pin UI (one tap fixes it, `method: staff_pin`, confidence → high). This is honest about a real problem: "near the old tank behind the temple" does not geocode, and pretending otherwise corrupts every downstream number — §12.
 
 Admin-unit assignment is one GIS join at enrichment:
 
@@ -697,7 +697,7 @@ The full mechanism is §4; the summary contract: **language is handled once, at 
 
 **Flagship scenario (build completely, polish ruthlessly):** *School upgrade vs vocational centre in one named mandal* — real UDISE+ data for that district, seeded + live submissions in 3 languages across ≥4 channels, both clusters ranked with full why-panels, demo walkthrough where a live WhatsApp voice note visibly moves the ranking. Everything else may be thinner: other categories can exist with demand-only scoring (`evidence_available=false` — which *demonstrates* the honesty design rather than embarrassing it), other mandals can have sparse data, lifecycle beyond "recommended" can be UI-only.
 
-**Phase 1 — the spine (target: one submission flows end-to-end).** Fork campus-connect; rename/remap roles; Unified Submission schema + Firestore rules; app intake with language picker, voice recorder, GPS; triage prompt v1 (§3a) in `enrich-worker` (synchronous call, no Pub/Sub yet); dashboard = ranked list using interim score (demand+recency only); deploy `intake-api` to Cloud Run. *Exit test: Telugu voice note in app → enriched record on dashboard.*
+**Phase 1 — the spine (target: one submission flows end-to-end).** Set up roles; Unified Submission schema + Firestore rules; app intake with language picker, voice recorder, GPS; triage prompt v1 (§3a) in `enrich-worker` (synchronous call, no Pub/Sub yet); dashboard = ranked list using interim score (demand+recency only); deploy `intake-api` to Cloud Run. *Exit test: Telugu voice note in app → enriched record on dashboard.*
 
 **Phase 2 — the intelligence (the parts that win or lose the hackathon).** Pub/Sub decoupling; WhatsApp Cloud API webhook + reply flow (dev mode); BigQuery: boundaries + LGD + UDISE+ ETL; embeddings + clustering (§4) incl. threshold labeling afternoon; evidence SQL + composite scoring (§5–6); score-runner + Scheduler; dashboard v2: score breakdown bars, hotspot map (flutter_map, mandal choropleth + cluster pins), review queue. *Exit test: §4.3 cross-language test passes; flagship comparison shows correct ranking with real UDISE+ numbers.*
 
@@ -722,7 +722,7 @@ Surya (AI/full-stack) fits P3 with reach into P2 — the clustering-scoring seam
 |---|---|
 | **Problem–Solution Fit** | Flagship scenario is *the organizers' own example* answered with their named data need (UDISE+ enrollment + travel distance, §5.3); evidence outweighs raw complaint-count in the formula by design (§6) — directly the "no objective way to weigh proposals" gap; meeting channel captures the MP's actual current intake medium |
 | **AI/Technical Execution** | Multimodal Gemini triage with structured output (§3a); native-audio meeting extraction (§3b); cross-lingual clustering via canonical-summary embeddings + `VECTOR_SEARCH` with hard geo/category pre-filters and reviewed threshold bands (§4); LLM strictly separated from arithmetic in justification (§3c) — an explainability decision judges can probe |
-| **Deployability & Scalability** | Everything serverless/scale-to-zero on Cloud Run + Firestore + BigQuery; no standing-cost components (Vector Search endpoint explicitly rejected, §1.2); costed scale path with the first three walls named (§7); built on a working production-pattern codebase (campus-connect), not greenfield |
+| **Deployability & Scalability** | Everything serverless/scale-to-zero on Cloud Run + Firestore + BigQuery; no standing-cost components (Vector Search endpoint explicitly rejected, §1.2); costed scale path with the first three walls named (§7); built on proven production patterns |
 | **Inclusivity & Accessibility** | Voice-first, confirm-by-listening loop in te/hi/en (§9.2); WhatsApp path = zero app install, zero literacy requirement; public-meeting channel includes offline citizens; original-script text always preserved; equity limits openly stated (§12) |
 | **Impact Potential** | Output is an *actionable, defensible* ranked works list — the artifact an MP office actually needs for MPLADS/DPC decisions; connector pattern gives a credible path to real portal integration via MoU (§8.2); per-category evidence specs make expansion config-not-code (§5.3) |
 | **Presentation & Clarity** | One rehearsed live E2E flow (§1.4) with a visible rank change; why-panel turns the scoring math into a story; explicit SIMULATED badging converts a limitation into a demonstrated integrity feature; worked school-vs-vocational table (§6) is the single slide that explains the whole product |

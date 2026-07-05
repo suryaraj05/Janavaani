@@ -1,30 +1,31 @@
-# People's Priorities — Flutter app
+# Janavaani — Flutter app
 
-Citizen intake (voice-first, Telugu/Hindi/English) and MP/staff dashboard in one
-role-gated codebase.
+Citizen intake (voice-first, Telugu/Hindi/English) and MP/staff dashboard.
 
 ## Run locally
 
 ```bash
 flutter pub get
-flutter run
+flutter run -d web-server --web-port=5050 --dart-define=INTAKE_PORT=8092
 ```
 
-Point API calls at `intake-api` (default `http://localhost:8080` in
-`lib/config/api_config.dart`). Start the backend from the repo root first.
+Start the backend first: `cd ../backend && npm run dev:stack`
+
+Production API:
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://your-api.onrender.com
+```
 
 ## Key screens
 
 | Route | Role | Purpose |
 |-------|------|---------|
-| `/submit` | citizen | Voice/text/photo submission, TTS confirm, offline queue |
-| `/dashboard` | mp_staff, mp | Ranked clusters, E/D/V/R bars, why-panel |
-| `/hotspots` | mp_staff, mp | OSM map of cluster centroids by score |
+| `/submit` | citizen | Voice/text/photo submission, offline queue |
+| `/home` → Priorities | all | Ranked clusters, E/D/V/R, map |
+| `/debug` | dev | API health + auth check |
 
 ## Firebase
 
-Register this app in your Firebase project and replace the campus-connect
-placeholders in `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`,
-and `lib/config/firebase_config.dart`.
-
-Legacy campus-connect setup notes live in `../docs/legacy/campus-connect-app/`.
+Project: `mpconnect-67f6c` — config in `lib/config/firebase_config.dart`.  
+Enable **Email/Password** in Firebase Console before register/login.

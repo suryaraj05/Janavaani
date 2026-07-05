@@ -26,7 +26,7 @@ class ApiConfig {
   static const String authRegister = '/api/v1/auth/register';
   static const String authLogin = '/api/v1/auth/login';
 
-  // Legacy campus-connect endpoints (compile compat)
+  // Legacy grievance endpoints (compile compat — not used in Janavaani demo path)
   static const String version = '/api/version';
   static const String aiAnalyze = '/api/v1/ai/analyze';
   static const String aiCheckDuplicates = '/api/v1/ai/check-duplicates';

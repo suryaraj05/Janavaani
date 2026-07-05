@@ -1,0 +1,56 @@
+# Janavaani backend — Render Blueprint (repo root)
+# Dashboard: New → Blueprint → connect github.com/suryaraj05/Janavaani
+# After sync, set secret env vars when prompted (Firebase, PEPPER, CONNECTOR_TOKEN, GEMINI).
+
+services:
+
+  - type: web
+    name: janavaani-enrich
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build -w @pp/schema && npm run build -w @pp/enrich-worker
+    startCommand: node services/enrich-worker/dist/index.js
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  - type: web
+    name: janavaani-intake
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build -w @pp/schema && npm run build -w @pp/intake-api
+    startCommand: node services/intake-api/dist/index.js
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: PEPPER
+        sync: false
+      - key: CONNECTOR_TOKEN
+        sync: false
+      - key: CONSTITUENCY_CODE
+        value: PC-MALKAJGIRI
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ENRICH_WORKER_URL
+        fromService:
+          type: web
+          name: janavaani-enrich
+          property: host

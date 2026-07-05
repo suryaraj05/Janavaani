@@ -1,6 +1,6 @@
 # Janavaani — citizen voice → ranked, evidence-backed priorities
 
-Monorepo with a **Flutter app** and a **TypeScript backend** (deploy backend to Railway; app calls the public API).
+Monorepo with a **Flutter app** and a **TypeScript backend** (deploy API to Render/Cloud Run; app calls the public URL).
 
 ```
 Janavaani/
@@ -21,7 +21,9 @@ npm run dev:stack       # intake :8092, enrich :8081, score :8083, connectors :8
 npm run verify:backend
 ```
 
-Deploy to Railway: [`docs/RAILWAY_DEPLOY.md`](docs/RAILWAY_DEPLOY.md)
+- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — what works today
+- [`docs/DEPLOY.md`](docs/DEPLOY.md) — where to host backend + app
+- [`docs/RAILWAY_DEPLOY.md`](docs/RAILWAY_DEPLOY.md) — Railway (optional)
 
 ### App
 
@@ -30,7 +32,7 @@ cd app
 flutter pub get
 flutter run -d web-server --web-port=5050 --dart-define=INTAKE_PORT=8092
 # Production API:
-# flutter run --dart-define=API_BASE_URL=https://your-app.up.railway.app
+# flutter run --dart-define=API_BASE_URL=https://your-api.onrender.com
 ```
 
 Open **http://localhost:5050**
@@ -47,16 +49,18 @@ npm run dev:app          # separate terminal
 
 | Piece | Where | Notes |
 |-------|--------|------|
-| **intake-api** | Railway (public) | REST + auth — point Flutter `API_BASE_URL` here |
-| **enrich-worker** | Railway (private) | Triage, embed, cluster |
-| **app** | Web / Play Store | No secrets in repo; Firebase web config only |
+| **intake-api** | Render / Cloud Run (public) | REST + auth — Flutter `API_BASE_URL` |
+| **enrich-worker** | Same host, 2nd service | Internal URL → `ENRICH_WORKER_URL` |
+| **Flutter web** | Vercel (optional) | `flutter build web` static files only |
+| **Flutter mobile** | APK / Play Store | Same API URL |
 
-**Not in git:** `.env`, service account JSON, `node_modules`, `dist/`, `campus-connect/`
+## Deploy
+
+See [`docs/DEPLOY.md`](docs/DEPLOY.md) — **Render or Cloud Run for backend**, Vercel for Flutter web only.
 
 ## Docs
 
 - [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — what works today
-- [`docs/RAILWAY_DEPLOY.md`](docs/RAILWAY_DEPLOY.md) — backend deploy
 - [`docs/peoples-priorities-architecture.md`](docs/peoples-priorities-architecture.md) — system design
 
 Firebase project: `mpconnect-67f6c` · Constituency demo: `PC-MALKAJGIRI`

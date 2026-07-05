@@ -42,10 +42,8 @@ MPconnect/
 ├── scripts/                      seed, e2e, smoke, dev-local.ps1, load scripts
 ├── test/golden/                  Cross-language clustering golden tests
 ├── infra/                        Docker, Firestore rules, service account paths
-├── docs/                         Architecture + build prompts
-├── SECURITY.md                   Secret hygiene + rotation checklist
-├── CURSOR_FIX_PROMPT.md          Active fix/hardening instructions for agents
-└── campus-connect/               Gitignored reference fork — DO NOT EDIT
+├── docs/                         Architecture + deploy guides
+├── SECURITY.md                   Secret hygiene + rotation checklist (in backend/)
 ```
 
 ---
@@ -185,7 +183,7 @@ Debug: open **http://localhost:5050/#/debug** — shows `baseUrl`, `/health`, `/
 | POST | `/api/v1/link/whatsapp/start` | Bearer | Identity link code |
 | * | `/api/v1/webhooks/whatsapp` | WA verify token | WhatsApp webhook |
 
-Legacy campus-connect routes (`/grievances`, `/notifications`, etc.) are **not implemented** — Flutter redirects those screens to `/home`.
+Legacy grievance routes (`/grievances`, `/notifications`, etc.) are **not implemented** — Flutter redirects those screens to `/home`.
 
 ---
 

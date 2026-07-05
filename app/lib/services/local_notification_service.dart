@@ -76,9 +76,9 @@ class LocalNotificationService {
     if (!_initialized) await initialize();
 
     const androidDetails = AndroidNotificationDetails(
-      'campus_connect_channel',
-      'Campus Connect Notifications',
-      channelDescription: 'Notifications for grievance updates and status changes',
+      'janavaani_channel',
+      'Janavaani Notifications',
+      channelDescription: 'Notifications for priority updates and submission status',
       importance: Importance.high,
       priority: Priority.high,
       showWhen: true,
@@ -114,9 +114,9 @@ class LocalNotificationService {
     if (!_initialized) await initialize();
 
     const androidDetails = AndroidNotificationDetails(
-      'campus_connect_channel',
-      'Campus Connect Notifications',
-      channelDescription: 'Notifications for grievance updates and status changes',
+      'janavaani_channel',
+      'Janavaani Notifications',
+      channelDescription: 'Notifications for priority updates and submission status',
       importance: Importance.high,
       priority: Priority.high,
     );

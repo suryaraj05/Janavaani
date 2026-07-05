@@ -145,7 +145,7 @@ class HelpCenterScreen extends StatelessWidget {
           // App Version
           Center(
             child: Text(
-              'Campus Connect v1.0.0',
+              'Janavaani v1.0.0',
               style: AppDesignSystem.bodySmall.copyWith(
                 color: AppDesignSystem.textTertiary,
               ),

@@ -1,0 +1,88 @@
+# Render Blueprint — Janavaani backend
+# https://render.com/docs/blueprint-spec
+#
+# Deploy: render.com → New → Blueprint → connect Janavaani repo
+# Set all env vars from backend/.env.example before first deploy.
+
+services:
+
+  # ─── intake-api (public REST API) ───────────────────────────────────────────
+  - type: web
+    name: janavaani-intake
+    runtime: docker
+    repo: https://github.com/suryaraj05/Janavaani
+    rootDir: backend
+    dockerfilePath: infra/Dockerfile
+    dockerContext: .
+    dockerCommand: node services/intake-api/dist/index.js
+    envVars:
+      - key: SERVICE
+        value: intake-api
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: PEPPER
+        sync: false
+      - key: CONNECTOR_TOKEN
+        sync: false
+      - key: CONSTITUENCY_CODE
+        value: PC-MALKAJGIRI
+      - key: ENRICH_WORKER_URL
+        fromService:
+          name: janavaani-enrich
+          type: web
+          property: hostport
+      - key: GEMINI_API_KEY
+        sync: false
+    healthCheckPath: /health
+    plan: starter
+    autoDeploy: true
+
+  # ─── enrich-worker (internal processing) ─────────────────────────────────────
+  - type: web
+    name: janavaani-enrich
+    runtime: docker
+    repo: https://github.com/suryaraj05/Janavaani
+    rootDir: backend
+    dockerfilePath: infra/Dockerfile
+    dockerContext: .
+    dockerCommand: node services/enrich-worker/dist/index.js
+    envVars:
+      - key: SERVICE
+        value: enrich-worker
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+    healthCheckPath: /health
+    plan: starter
+    autoDeploy: true
+
+  # ─── Keep-alive cron: pings both services every 10 min so free tier stays warm ─
+  - type: cron
+    name: janavaani-keepalive
+    runtime: node
+    repo: https://github.com/suryaraj05/Janavaani
+    rootDir: backend
+    buildCommand: echo "no build needed"
+    startCommand: node scripts/keepalive.js
+    schedule: "*/10 * * * *"   # every 10 minutes
+    envVars:
+      - key: INTAKE_API_URL
+        fromService:
+          name: janavaani-intake
+          type: web
+          property: host
+      - key: ENRICH_WORKER_URL
+        fromService:
+          name: janavaani-enrich
+          type: web
+          property: host
+    plan: starter
